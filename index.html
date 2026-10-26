@@ -103,8 +103,8 @@
             text-align: center;
             vertical-align: middle;
             font-size: 12px;
-            padding: 4px;
-            height: 90px;
+            padding: 0;
+            height: 95px;
             box-sizing: border-box;
             position: relative;
         }
@@ -139,10 +139,8 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 4px;
+            padding: 5px 6px;
             box-sizing: border-box;
-            border-radius: 2px;
-            cursor: pointer;
             position: relative;
         }
 
@@ -170,13 +168,12 @@
         .color-cyan { background-color: #80ffff; }
         .color-pink { background-color: #ff99ff; }
 
-        /* Structura dubla pentru laboratoare (Split Gr1 / Gr2) */
+        /* Structura dublă pentru laboratoare (Split Gr1 / Gr2 cu culori specifice) */
         .split-cell {
             display: flex;
             flex-direction: column;
             height: 100%;
             width: 100%;
-            gap: 2px;
         }
 
         .sub-group {
@@ -184,20 +181,23 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 2px 4px;
-            border: 1px solid #777;
+            padding: 3px 6px;
+            border-bottom: 1px solid #000;
             font-size: 11px;
             box-sizing: border-box;
+        }
+
+        .sub-group:last-child {
+            border-bottom: none;
         }
 
         .sub-group-header {
             display: flex;
             justify-content: space-between;
-            font-weight: bold;
-            font-size: 10px;
+            font-size: 11px;
         }
 
-        /* Sectiune Cos de Gunoi */
+        /* Coș de gunoi */
         .trash-section {
             margin-top: 25px;
             background: #fff3f3;
@@ -251,13 +251,13 @@
 
         .delete-btn {
             position: absolute;
-            top: 3px;
-            right: 3px;
+            top: 2px;
+            right: 2px;
             background: rgba(220, 53, 69, 0.9);
             color: white;
             border: none;
             border-radius: 3px;
-            padding: 2px 6px;
+            padding: 2px 5px;
             font-size: 10px;
             cursor: pointer;
             display: none;
@@ -309,19 +309,19 @@
                 </tr>
             </thead>
             <tbody id="scheduleBody">
-                <!-- Se populeaza dinamic -->
+                <!-- Se populează dinamic -->
             </tbody>
         </table>
     </div>
 
-    <!-- Cosul de Gunoi -->
+    <!-- Coșul de Gunoi -->
     <div class="trash-section">
         <div class="trash-header">
             <h3>🗑️ Coș de Gunoi / Ore Arhivate</h3>
-            <span style="font-size: 12px; color: #666;">(Poți adăuga înapoi orice oră din coș în orar)</span>
+            <span style="font-size: 12px; color: #666;">(Apasă butonul verde pentru a trimite ora înapoi în orar)</span>
         </div>
         <div class="trash-grid" id="trashGrid">
-            <!-- Orele sterse apar aici -->
+            <!-- Orele șterse apar aici -->
         </div>
     </div>
 </div>
@@ -330,7 +330,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Datele initiale fixe conform imaginii oficiale
+    // Structură fixă conform imaginii
     const initialSchedule = {
         Mon: [
             { type: 'empty' }, { type: 'empty' },
@@ -344,27 +344,29 @@
             { type: 'empty' }, { type: 'empty' },
             { id: 't1', prof: 'Petcu G', title: 'StrAlgebraiceInInfo (seminar)', room: 'S.209', color: 'color-green', span: 2 },
             { type: 'empty' }, { type: 'empty' },
-            // Sfetcu R. ocupa EXACT 3 ore (14:00 - 16:50)
+            // Sfetcu R. ocupă EXACT 3 ore (14:00 - 16:50)
             { id: 't2', prof: 'Sfetcu R', title: 'CalcDifer&Integr (curs)', room: 'S-214', color: 'color-cyan', span: 3 },
             { type: 'empty' }, { type: 'empty' }
         ],
         Wed: [
             { type: 'empty' }, { type: 'empty' },
             { id: 'w1', prof: 'Ceausescu C / Dumitran M', title: 'AlgorithmProgr (curs)', room: 'S-214', color: 'color-pink', span: 2 },
+            // CURSUL DE LA 12 APARE AICI:
             { id: 'w2', prof: 'Chirita CE', title: 'WebTechniques (curs)', room: 'S-214', color: 'color-pink', span: 2 },
             { type: 'empty' }, { type: 'empty' }, { type: 'empty' }, { type: 'empty' }, { type: 'empty' }, { type: 'empty' }
         ],
         Thu: [
             { type: 'empty' }, { type: 'empty' },
-            { id: 'th1', type: 'split', color: 'color-pink', span: 2,
-              gr1: { prof: 'Ceausescu C', title: 'AlgorithmProgr (Lab)', room: 'L.411' },
-              gr2: { prof: 'Mocanu S', title: 'WebTechniques (Lab)', room: 'L-404' } 
+            // Subgrupe colorate individual ca în orarul de referință
+            { id: 'th1', type: 'split', span: 2,
+              gr1: { prof: 'Ceausescu C', title: 'AlgorithmProgr (Lab)', room: 'L.411', color: 'color-pink' },
+              gr2: { prof: 'Mocanu S', title: 'WebTechniques (Lab)', room: 'L-404', color: 'color-yellow' } 
             },
-            { id: 'th2', type: 'split', color: 'color-pink', span: 2,
-              gr1: { prof: 'Mocanu S', title: 'WebTechniques (Lab)', room: 'L-507' },
-              gr2: { prof: 'Ceausescu C', title: 'AlgorithmProgr (Lab)', room: 'L.411' } 
+            { id: 'th2', type: 'split', span: 2,
+              gr1: { prof: 'Mocanu S', title: 'WebTechniques (Lab)', room: 'L-507', color: 'color-yellow' },
+              gr2: { prof: 'Ceausescu C', title: 'AlgorithmProgr (Lab)', room: 'L.411', color: 'color-pink' } 
             },
-            // SEMINARUL de AlgorithmProgr apare DOAR în săptămânile PARE (sapt 2-14)
+            // Seminarul de AlgorithmProgr apare DOAR în săptămânile PARE (sapt 2-14)
             { id: 'th3', prof: 'Ceausescu C', title: 'AlgorithmProgr (seminar, SP)', room: 'S.109', color: 'color-pink', span: 2, evenOnly: true },
             { id: 'th4', prof: 'Sfetcu R', title: 'CalcDifer&Integr (seminar)', room: 'S.211', color: 'color-cyan', span: 2 }
         ],
@@ -382,196 +384,8 @@
         trash: []
     };
 
-    // Populare opțiuni săptămâni (1-14)
+    // Populare săptămâni 1-14
     const select = document.getElementById('weekSelect');
     for (let i = 1; i <= 14; i++) {
         const opt = document.createElement('option');
         opt.value = i;
-        opt.textContent = `Săptămâna ${i}`;
-        select.appendChild(opt);
-    }
-
-    window.schimbaSaptamana = function(val) {
-        appState.currentWeek = parseInt(val);
-        updateWeekBadge();
-        renderSchedule();
-    };
-
-    function updateWeekBadge() {
-        const isEven = appState.currentWeek % 2 === 0;
-        const badge = document.getElementById('weekTypeBadge');
-        badge.textContent = isEven ? "(Săptămână PARĂ - este prezent seminarul de AlgorithmProgr)" : "(Săptămână IMPARĂ - fără seminar AlgorithmProgr)";
-    }
-
-    window.stergeInCos = function(day, id) {
-        const index = appState.schedule[day].findIndex(item => item.id === id);
-        if (index !== -1) {
-            const item = appState.schedule[day][index];
-            appState.trash.push({ ...item, originalDay: day });
-            appState.schedule[day][index] = { type: 'empty' };
-            saveState();
-            renderSchedule();
-            renderTrash();
-        }
-    };
-
-    window.restaureazaDinCos = function(trashIndex) {
-        const item = appState.trash[trashIndex];
-        const day = item.originalDay || 'Mon';
-        
-        // Găsim prima poziție liberă din ziua respectivă
-        let targetIndex = -1;
-        for (let i = 0; i < appState.schedule[day].length; i++) {
-            if (appState.schedule[day][i].type === 'empty') {
-                targetIndex = i;
-                break;
-            }
-        }
-
-        if (targetIndex !== -1) {
-            const restoredItem = { ...item };
-            delete restoredItem.originalDay;
-            appState.schedule[day][targetIndex] = restoredItem;
-            appState.trash.splice(trashIndex, 1);
-            saveState();
-            renderSchedule();
-            renderTrash();
-        } else {
-            alert(`Nu mai există spațiu liber în ziua de ${day} pentru a adăuga această oră!`);
-        }
-    };
-
-    window.resetToInitialData = function() {
-        if (confirm("Sigur dorești să resetezi orarul la varianta inițială?")) {
-            appState.schedule = JSON.parse(JSON.stringify(initialSchedule));
-            appState.trash = [];
-            saveState();
-            renderSchedule();
-            renderTrash();
-        }
-    };
-
-    function saveState() {
-        localStorage.setItem('fmi_orar_state', JSON.stringify(appState));
-    }
-
-    function loadState() {
-        const local = localStorage.getItem('fmi_orar_state');
-        if (local) {
-            appState = JSON.parse(local);
-            document.getElementById('weekSelect').value = appState.currentWeek;
-        }
-        updateWeekBadge();
-        renderSchedule();
-        renderTrash();
-    }
-
-    function renderSchedule() {
-        const tbody = document.getElementById('scheduleBody');
-        tbody.innerHTML = '';
-
-        const days = [
-            { key: 'Mon', label: 'Lu<br>Mon' },
-            { key: 'Tue', label: 'Ma<br>Tue' },
-            { key: 'Wed', label: 'Mi<br>Wed' },
-            { key: 'Thu', label: 'Jo<br>Thu' },
-            { key: 'Fri', label: 'Vi<br>Fri' }
-        ];
-
-        const isEvenWeek = appState.currentWeek % 2 === 0;
-
-        days.forEach(dayObj => {
-            const tr = document.createElement('tr');
-            
-            const th = document.createElement('th');
-            th.className = 'day-header';
-            th.innerHTML = dayObj.label;
-            tr.appendChild(th);
-
-            const items = appState.schedule[dayObj.key];
-
-            for (let i = 0; i < items.length; i++) {
-                const item = items[i];
-
-                if (item.type === 'empty') {
-                    const td = document.createElement('td');
-                    tr.appendChild(td);
-                } else if (item.evenOnly && !isEvenWeek) {
-                    const td = document.createElement('td');
-                    td.colSpan = item.span || 2;
-                    td.style.background = "#fafafa";
-                    td.innerHTML = `
-                        <button class="delete-btn" onclick="stergeInCos('${dayObj.key}', '${item.id}')">Șterge</button>
-                        <span style="color:#aaa; font-style:italic;">Fără seminar (Săpt. Impară)</span>
-                    `;
-                    tr.appendChild(td);
-                } else if (item.type === 'split') {
-                    const td = document.createElement('td');
-                    td.colSpan = item.span || 2;
-                    td.className = item.color;
-
-                    td.innerHTML = `
-                        <button class="delete-btn" onclick="stergeInCos('${dayObj.key}', '${item.id}')">Șterge</button>
-                        <div class="split-cell">
-                            <div class="sub-group">
-                                <div class="sub-group-header"><span>${item.gr1.prof}</span><span>Gr 1</span></div>
-                                <div style="font-weight:bold;">${item.gr1.title}</div>
-                                <div style="text-align:right;">${item.gr1.room}</div>
-                            </div>
-                            <div class="sub-group">
-                                <div class="sub-group-header"><span>${item.gr2.prof}</span><span>Gr 2</span></div>
-                                <div style="font-weight:bold;">${item.gr2.title}</div>
-                                <div style="text-align:right;">${item.gr2.room}</div>
-                            </div>
-                        </div>
-                    `;
-                    tr.appendChild(td);
-                } else {
-                    const td = document.createElement('td');
-                    td.colSpan = item.span || 2;
-                    
-                    td.innerHTML = `
-                        <button class="delete-btn" onclick="stergeInCos('${dayObj.key}', '${item.id}')">Șterge</button>
-                        <div class="course-card ${item.color}">
-                            <div class="prof-name">${item.prof}</div>
-                            <div class="course-title">${item.title}</div>
-                            <div class="room-name">${item.room}</div>
-                        </div>
-                    `;
-                    tr.appendChild(td);
-                }
-            }
-
-            tbody.appendChild(tr);
-        });
-    }
-
-    function renderTrash() {
-        const grid = document.getElementById('trashGrid');
-        grid.innerHTML = '';
-
-        if (appState.trash.length === 0) {
-            grid.innerHTML = '<span style="color:#888; font-style:italic;">Coșul de gunoi este gol. Orele șterse vor apărea aici.</span>';
-            return;
-        }
-
-        appState.trash.forEach((item, index) => {
-            const div = document.createElement('div');
-            div.className = `trash-item ${item.color || 'color-pink'}`;
-
-            let label = item.title || (item.gr1 ? `${item.gr1.title} / ${item.gr2.title}` : 'Oră laborator');
-            div.innerHTML = `
-                <span>${label} (${item.originalDay || 'Zi'})</span>
-                <button class="restore-btn" onclick="restaureazaDinCos(${index})">➕ Adaugă înapoi în Orar</button>
-            `;
-
-            grid.appendChild(div);
-        });
-    }
-
-    // Inițializare
-    loadState();
-</script>
-
-</body>
-</html>
