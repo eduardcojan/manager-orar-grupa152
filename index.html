@@ -1,953 +1,514 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ro">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>INFO-EN Grupa 152 - Orar Oficial FMI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .timetable-table {
-            border-collapse: collapse;
-            width: 100%;
-            min-width: 800px; /* Ensures table grid layout is preserved on mobile screens with horizontal scroll */
-            table-layout: fixed;
-        }
-        .timetable-table th, .timetable-table td {
-            border: 1px solid #000000;
-        }
-        /* Color Palette matching official paper timetable */
-        .bg-tools-lab { background-color: #90ee90; }          /* Light Green */
-        .bg-str-curs { background-color: #ccff00; }           /* Yellow-Lime */
-        .bg-tools-curs { background-color: #6495ed; }         /* Cornflower Blue */
-        .bg-str-sem { background-color: #98fb98; }            /* Mint Green */
-        .bg-calc-sfetcu { background-color: #a0eff0; }        /* Ice Cyan */
-        .bg-algo-curs { background-color: #d8b4fe; }          /* Lilac/Purple */
-        .bg-web-curs { background-color: #f472b6; }           /* Pink/Magenta */
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Orar INFO-EN · Grupa 152</title>
+<style>
+  :root{
+    color-scheme: light dark;
+    --bg:#f3f4f9; --card:#ffffff; --text:#1c2030; --muted:#6a7186; --line:#dfe3ec;
+    --primary:#4f46e5; --danger:#dc2626; --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0e1016; --card:#181b25; --text:#e8eaf2; --muted:#98a0b5; --line:#2a2f3f; --primary:#8b93ff; --danger:#f87171; }
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-text-size-adjust:100%;
+  }
+  .app{ max-width:1560px; margin:0 auto; padding:16px; padding-left:max(16px,env(safe-area-inset-left)); padding-right:max(16px,env(safe-area-inset-right)); }
+  header{ display:flex; flex-wrap:wrap; gap:14px 24px; align-items:center; justify-content:space-between; }
+  h1{ margin:0; font-size:1.45rem; letter-spacing:-.01em; }
+  .sub{ color:var(--muted); font-size:.85rem; margin-top:2px; }
+  .weekbar{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .weekbar button, .weekbar select{
+    height:42px; border:1px solid var(--line); background:var(--card); color:var(--text);
+    border-radius:11px; font:inherit; padding:0 14px; cursor:pointer;
+  }
+  .weekbar button:hover:not(:disabled){ border-color:var(--primary); }
+  .weekbar button:disabled{ opacity:.4; cursor:default; }
+  .weekbar select{ font-weight:600; min-width:150px; }
+  .weekinfo{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px; color:var(--muted); font-size:.9rem; }
+  .pill{ display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:99px; background:color-mix(in srgb,var(--primary) 14%,transparent); color:var(--primary); font-size:.78rem; font-weight:600; }
+  .pill.muted{ background:color-mix(in srgb,var(--muted) 16%,transparent); color:var(--muted); }
+  .linkbtn{ background:none; border:0; color:var(--primary); font:inherit; cursor:pointer; padding:0; text-decoration:underline; }
+  .banner{ margin-top:12px; padding:10px 14px; border-radius:12px; background:color-mix(in srgb,#f59e0b 18%,var(--card)); border:1px solid color-mix(in srgb,#f59e0b 50%,transparent); font-size:.88rem; }
+  .banner[hidden]{ display:none; }
 
-        /* Custom smooth scrollbar for mobile timetable table */
-        .custom-scrollbar::-webkit-scrollbar {
-            height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-    </style>
+  .main{ display:grid; grid-template-columns:minmax(0,1fr); gap:16px; margin-top:14px; }
+  @media (min-width:1480px){ .main{ grid-template-columns:minmax(0,1fr) 290px; align-items:start; } }
+
+  .scroller{
+    overflow-x:auto; -webkit-overflow-scrolling:touch;
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+  }
+  .grid{
+    display:grid; gap:4px; padding:8px; min-width:1010px;
+    grid-template-columns:82px repeat(12,minmax(72px,1fr));
+    grid-template-rows:auto repeat(6,minmax(88px,auto));
+  }
+  .hh{ display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4px 0 8px; }
+  .hh b{ font-size:1.15rem; }
+  .hh small{ color:var(--muted); font-size:.68rem; white-space:nowrap; }
+  .day{
+    position:sticky; left:0; z-index:3;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+    background:var(--card); border:1px solid var(--line); border-radius:12px; font-weight:700;
+    box-shadow:6px 0 8px -6px rgba(0,0,0,.18);
+  }
+  .day small{ font-weight:500; color:var(--muted); font-size:.74rem; margin-top:2px; }
+  .day.today{ border-color:var(--primary); color:var(--primary); box-shadow:0 0 0 1px var(--primary), 6px 0 8px -6px rgba(0,0,0,.18); }
+
+  .cell{
+    border:1.5px dashed var(--line); border-radius:11px; background:transparent; color:var(--muted);
+    cursor:pointer; font:inherit; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0;
+    min-height:88px; padding:0;
+  }
+  .cell .plus{ font-size:1.4rem; line-height:1; opacity:.45; }
+  .cell .gr{ font-size:.66rem; opacity:.6; }
+  .cell:hover, .cell:focus-visible{ border-color:var(--primary); color:var(--primary); background:color-mix(in srgb,var(--primary) 8%,transparent); outline:none; }
+  .cell:hover .plus{ opacity:1; }
+
+  .item{
+    --a:#6366f1;
+    z-index:1; text-align:left; font:inherit; color:var(--text); cursor:pointer;
+    border:0; border-left:5px solid var(--a); border-radius:11px;
+    background:color-mix(in srgb,var(--a) 17%,var(--card));
+    padding:8px 10px; display:flex; flex-direction:column; gap:1px; overflow:hidden; min-width:0;
+    transition:transform .08s, box-shadow .12s;
+  }
+  .item:hover, .item:focus-visible{ box-shadow:0 3px 14px color-mix(in srgb,var(--a) 40%,transparent); transform:translateY(-1px); outline:none; }
+  .item .te{ font-size:.76rem; color:var(--muted); }
+  .item .su{ font-weight:700; font-size:.9rem; overflow-wrap:anywhere; margin-top:2px; }
+  .item .ty{ font-size:.78rem; }
+  .item .ro{ margin-top:auto; align-self:flex-end; font-size:.78rem; font-weight:600; color:var(--a); }
+  .c-tools{ --a:#0d9488; } .c-alg{ --a:#7c3aed; } .c-calc{ --a:#d97706; }
+  .c-ap{ --a:#e11d48; } .c-web{ --a:#0284c7; } .c-csa{ --a:#16a34a; }
+
+  .trash{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px; }
+  .trash h2{ margin:0 0 2px; font-size:1.05rem; display:flex; align-items:center; gap:8px; }
+  .trash .count{ background:var(--danger); color:#fff; border-radius:99px; font-size:.75rem; padding:1px 9px; }
+  .trash p{ margin:2px 0 10px; color:var(--muted); font-size:.82rem; }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  @media (min-width:1480px){ .chips{ flex-direction:column; } }
+  .chip{
+    --a:#6366f1; border-left:5px solid var(--a); border-radius:10px;
+    background:color-mix(in srgb,var(--a) 15%,var(--card)); padding:7px 10px; font-size:.82rem; min-width:170px;
+  }
+  .chip b{ display:block; overflow-wrap:anywhere; }
+  .chip span{ color:var(--muted); font-size:.76rem; }
+  .empty{ color:var(--muted); font-size:.88rem; padding:8px 0; }
+
+  dialog{
+    border:0; padding:0; border-radius:18px; background:var(--card); color:var(--text);
+    width:min(440px,calc(100vw - 24px)); box-shadow:0 24px 70px rgba(0,0,0,.4);
+  }
+  dialog::backdrop{ background:rgba(8,10,18,.55); }
+  .dlg{ padding:20px; display:flex; flex-direction:column; gap:12px; max-height:86vh; overflow:auto; }
+  .dlg h2{ margin:0; font-size:1.2rem; }
+  .dlg .rows{ display:grid; grid-template-columns:auto 1fr; gap:4px 14px; font-size:.92rem; }
+  .dlg .rows dt{ color:var(--muted); } .dlg .rows dd{ margin:0; font-weight:600; }
+  .actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+  .btn{ height:44px; padding:0 18px; border-radius:11px; border:1px solid var(--line); background:var(--card); color:var(--text); font:inherit; font-weight:600; cursor:pointer; }
+  .btn.danger{ background:var(--danger); border-color:var(--danger); color:#fff; }
+  .btn.grow{ flex:1; }
+  .pick{
+    --a:#6366f1; display:block; width:100%; text-align:left; font:inherit; color:var(--text); cursor:pointer;
+    border:1px solid var(--line); border-left:5px solid var(--a); border-radius:11px;
+    background:color-mix(in srgb,var(--a) 12%,var(--card)); padding:9px 12px;
+  }
+  .pick:hover:not(:disabled){ border-color:var(--a); }
+  .pick:disabled{ opacity:.45; cursor:not-allowed; }
+  .pick b{ display:block; } .pick span{ font-size:.8rem; color:var(--muted); }
+  .picks{ display:flex; flex-direction:column; gap:8px; }
+
+  .toast{
+    position:fixed; left:50%; bottom:max(20px,env(safe-area-inset-bottom)); transform:translateX(-50%);
+    background:#1f2433; color:#fff; padding:11px 18px; border-radius:12px; z-index:50; font-size:.9rem;
+    max-width:calc(100vw - 32px); box-shadow:0 8px 30px rgba(0,0,0,.35);
+  }
+  .toast[hidden]{ display:none; }
+  .hint{ color:var(--muted); font-size:.8rem; margin:8px 2px 0; }
+  @media (max-width:640px){
+    .app{ padding:12px; } h1{ font-size:1.2rem; }
+    .weekbar{ width:100%; } .weekbar select{ flex:1; }
+  }
+</style>
 </head>
-<body class="p-2 sm:p-4 text-slate-900 min-h-screen flex flex-col max-w-7xl mx-auto">
-
-    <!-- App Header -->
-    <header class="bg-white p-3 sm:p-4 rounded-xl shadow-sm border border-slate-200 mb-3 sm:mb-4 flex flex-col md:flex-row md:justify-between md:items-center gap-3">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                    <span>INFO-EN Grupa 152</span>
-                    <span class="text-[10px] sm:text-xs bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full border border-indigo-200">FMI UniBuc</span>
-                </h1>
-                <p class="text-[11px] sm:text-xs text-slate-500 font-medium">Facultatea de Matematică și Informatică, str. Academiei 14</p>
-            </div>
-            
-            <!-- Mobile Trash Icon Quick Access -->
-            <button onclick="openTrashViewerModal()" class="md:hidden px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg font-bold text-xs flex items-center gap-1.5">
-                <i class="fa-solid fa-trash-can text-amber-600"></i>
-                <span id="trash-badge-count-mobile" class="bg-amber-600 text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-bold">0</span>
-            </button>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2 text-xs">
-            <!-- Week selector -->
-            <div class="flex items-center space-x-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 w-full sm:w-auto justify-between sm:justify-start">
-                <span class="font-bold text-slate-700">Săptămâna:</span>
-                <div class="flex items-center gap-2">
-                    <select id="week-select" onchange="changeWeek(this.value)" class="bg-white border border-slate-300 rounded-md px-2 py-1 font-bold text-indigo-700 focus:outline-none cursor-pointer text-xs">
-                        <!-- Populated by JS -->
-                    </select>
-                    <span id="week-parity" class="font-bold px-2 py-0.5 rounded text-[11px] bg-indigo-100 text-indigo-800">
-                        Săptămână Impară
-                    </span>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <!-- Trash Badge Counter Desktop -->
-            <button onclick="openTrashViewerModal()" class="hidden md:flex px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg font-bold transition items-center gap-1.5">
-                <i class="fa-solid fa-trash-can text-amber-600"></i>
-                <span>Coș de Gunoi</span>
-                <span id="trash-badge-count" class="bg-amber-600 text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-bold">0</span>
-            </button>
-
-            <!-- Sync Indicator -->
-            <span id="sync-status" class="px-2.5 py-1.5 rounded-lg font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1.5 text-xs">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Local Storage
-            </span>
-
-            <button onclick="toggleFirebaseModal()" title="Configurare Firebase" class="p-2 sm:px-3 sm:py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-semibold transition flex items-center gap-1">
-                <i class="fa-solid fa-cloud"></i> <span class="hidden sm:inline">Firebase</span>
-            </button>
-
-            <button onclick="confirmReset()" title="Resetează orarul" class="p-2 sm:px-3 sm:py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-semibold transition flex items-center gap-1">
-                <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">Resetează</span>
-            </button>
-        </div>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>Orar INFO-EN · Grupa 152</h1>
+      <div class="sub">Universitatea din București, Facultatea de Matematică și Informatică</div>
     </div>
-</header>
-
-    <!-- Unified Table View (Strictly preserved on Mobile and Desktop with side scroll) -->
-    <div class="bg-slate-100 p-1 rounded-t-lg text-[10px] font-bold text-slate-500 flex justify-between items-center sm:hidden">
-        <span><i class="fa-solid fa-arrows-left-right mr-1"></i>Glisează orizontal pentru orar</span>
-        <span class="text-[9px] bg-slate-200 px-1.5 py-0.5 rounded">Tabel Oficial</span>
+    <div class="weekbar">
+      <button id="prev" aria-label="Săptămâna anterioară">‹</button>
+      <select id="weekSel" aria-label="Alege săptămâna"></select>
+      <button id="next" aria-label="Săptămâna următoare">›</button>
     </div>
-    <div class="overflow-x-auto custom-scrollbar bg-white shadow-md border border-black rounded-b-lg sm:rounded-lg flex-1 mb-2">
-        <table class="timetable-table text-xs">
-            <thead>
-                <tr class="bg-white text-black font-bold text-center">
-                    <th class="w-14 sm:w-16 p-1 sm:p-2 border-b border-black"></th>
-                    <th class="p-1 border-b border-black">8<br><span class="text-[9px] sm:text-[10px] font-normal">8:00 - 8:50</span></th>
-                    <th class="p-1 border-b border-black">9<br><span class="text-[9px] sm:text-[10px] font-normal">9:00 - 9:50</span></th>
-                    <th class="p-1 border-b border-black">10<br><span class="text-[9px] sm:text-[10px] font-normal">10:00 - 10:50</span></th>
-                    <th class="p-1 border-b border-black">11<br><span class="text-[9px] sm:text-[10px] font-normal">11:00 - 11:50</span></th>
-                    <th class="p-1 border-b border-black">12<br><span class="text-[9px] sm:text-[10px] font-normal">12:00 - 12:50</span></th>
-                    <th class="p-1 border-b border-black">13<br><span class="text-[9px] sm:text-[10px] font-normal">13:00 - 13:50</span></th>
-                    <th class="p-1 border-b border-black">14<br><span class="text-[9px] sm:text-[10px] font-normal">14:00 - 14:50</span></th>
-                    <th class="p-1 border-b border-black">15<br><span class="text-[9px] sm:text-[10px] font-normal">15:00 - 15:50</span></th>
-                    <th class="p-1 border-b border-black">16<br><span class="text-[9px] sm:text-[10px] font-normal">16:00 - 16:50</span></th>
-                    <th class="p-1 border-b border-black">17<br><span class="text-[9px] sm:text-[10px] font-normal">17:00 - 17:50</span></th>
-                    <th class="p-1 border-b border-black">18<br><span class="text-[9px] sm:text-[10px] font-normal">18:00 - 18:50</span></th>
-                    <th class="p-1 border-b border-black">19<br><span class="text-[9px] sm:text-[10px] font-normal">19:00 - 19:50</span></th>
-                </tr>
-            </thead>
-            <tbody id="timetable-body">
-                <!-- Built dynamically via JS -->
-            </tbody>
-        </table>
+  </header>
+
+  <div class="weekinfo" id="weekInfo"></div>
+  <div class="banner" id="banner" hidden></div>
+
+  <div class="main">
+    <div>
+      <div class="scroller"><div class="grid" id="grid"></div></div>
+      <p class="hint">Apasă pe o oră pentru a o muta în coș (doar din săptămâna afișată). Apasă pe o celulă liberă pentru a adăuga o oră din coș. Pe telefon, glisează tabelul orizontal.</p>
     </div>
-
-    <div class="mt-auto text-[11px] text-slate-500 flex justify-between items-center px-1 py-2 border-t border-slate-200">
-        <span>FMI UniBuc • INFO-EN 152</span>
-        <span>Orar Oficial A.U. 2026-2027</span>
-    </div>
-
-    <!-- Edit Modal (Handles standard courses & independent sub-group entities) -->
-    <div id="edit-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
-        <div class="bg-white rounded-t-2xl sm:rounded-xl shadow-2xl max-w-md w-full p-5 border border-slate-300 transform transition-all">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b">
-                <h3 class="text-base font-bold text-slate-900" id="edit-modal-title">Editează Curs</h3>
-                <span id="subgroup-badge" class="hidden text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">Subgrupă</span>
-            </div>
-            
-            <form id="edit-form" onsubmit="saveCellEdit(event)" class="space-y-3">
-                <input type="hidden" id="edit-day">
-                <input type="hidden" id="edit-index">
-                <input type="hidden" id="edit-subtarget">
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Profesor / Cadru Didactic</label>
-                    <input type="text" id="edit-prof" class="w-full border rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Nume Materie / Tip</label>
-                    <input type="text" id="edit-title" class="w-full border rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Sala</label>
-                    <input type="text" id="edit-room" class="w-full border rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Culoare Fundal</label>
-                    <select id="edit-bgclass" class="w-full border rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none font-semibold">
-                        <option value="bg-web-curs">Roz / Magenta (WebTechniques / AlgorithmProgr)</option>
-                        <option value="bg-str-curs">Galben / Lime (Web Lab / StrAlgebrice Curs)</option>
-                        <option value="bg-tools-lab">Verde Deschis (Tools Lab)</option>
-                        <option value="bg-tools-curs">Albastru (Tools Curs / CompSystArchit Lab)</option>
-                        <option value="bg-str-sem">Verde Mentă (StrAlgebrice Seminar)</option>
-                        <option value="bg-calc-sfetcu">Cyan / Ice (CalcDifer&Integr)</option>
-                    </select>
-                </div>
-
-                <div class="flex justify-between gap-2 pt-4 border-t mt-4">
-                    <button type="button" onclick="deleteCurrentCell()" class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-semibold text-xs flex items-center gap-1.5 transition">
-                        <i class="fa-solid fa-trash-can"></i> Mută în Coș
-                    </button>
-                    <div class="flex gap-2">
-                        <button type="button" onclick="closeEditModal()" class="px-3 py-2 border rounded-lg text-slate-600 font-semibold text-xs hover:bg-slate-50">Anulează</button>
-                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold text-xs hover:bg-indigo-700 transition">Salvează</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal Selectare din Coșul de Gunoi la apăsare pe celulă liberă -->
-    <div id="trash-select-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
-        <div class="bg-white rounded-t-2xl sm:rounded-xl shadow-2xl max-w-md w-full p-5 border border-slate-300">
-            <h3 class="text-base font-bold text-slate-900 mb-1">Alege entitatea din Coș de adăugat</h3>
-            <p class="text-xs text-slate-500 mb-4">Apasă pe materia sau subgrupa pe care dorești să o plasezi în acest interval orar:</p>
-            
-            <div id="trash-select-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
-                <!-- Populated dynamically -->
-            </div>
-
-            <div class="flex justify-between items-center pt-4 border-t mt-4">
-                <button type="button" onclick="openEditForEmptySlot()" class="text-xs text-indigo-600 font-bold hover:underline">
-                    + Creează curs nou
-                </button>
-                <button type="button" onclick="closeTrashSelectModal()" class="px-3 py-1.5 border rounded-lg text-slate-600 font-semibold text-xs hover:bg-slate-50">Închide</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Vizualizare completă Coș de Gunoi -->
-    <div id="trash-viewer-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4 z-50">
-        <div class="bg-white rounded-t-2xl sm:rounded-xl shadow-2xl max-w-md w-full p-5 border border-slate-300">
-            <div class="flex justify-between items-center mb-3 border-b pb-2">
-                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-trash-can text-amber-600"></i> Coșul de Gunoi
-                </h3>
-                <button onclick="emptyEntireTrash()" class="text-xs text-rose-600 font-bold hover:underline">Golește Coșul</button>
-            </div>
-            
-            <div id="trash-viewer-list" class="space-y-2 max-h-64 overflow-y-auto pr-1">
-                <!-- Populated dynamically -->
-            </div>
-
-            <div class="flex justify-end pt-3 border-t mt-4">
-                <button type="button" onclick="closeTrashViewerModal()" class="px-4 py-2 bg-slate-900 text-white rounded-lg font-semibold text-xs hover:bg-black">Închide</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase Modal -->
-    <div id="firebase-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-5 sm:p-6 border border-slate-300">
-            <h3 class="text-lg font-bold text-slate-900 mb-2">Configurare Firebase Real-time</h3>
-            <p class="text-xs text-slate-600 mb-4">Introduceți obiectul `firebaseConfig` din consola Firebase:</p>
-            <textarea id="firebase-config-input" rows="6" class="w-full border font-mono text-xs rounded-lg p-3 focus:ring-2 focus:ring-slate-800 outline-none bg-slate-50" placeholder='{
-  "apiKey": "...",
-  "authDomain": "...",
-  "projectId": "...",
-  "storageBucket": "...",
-  "messagingSenderId": "...",
-  "appId": "..."
-}'></textarea>
-            <div class="flex justify-between items-center pt-4">
-                <button onclick="disconnectFirebase()" class="text-xs text-rose-600 font-bold hover:underline">Deconectează</button>
-                <div class="flex gap-2">
-                    <button onclick="toggleFirebaseModal()" class="px-3 py-1.5 border rounded-lg text-slate-700 font-semibold hover:bg-slate-50 text-xs">Anulează</button>
-                    <button onclick="saveFirebaseConfig()" class="px-4 py-1.5 bg-slate-900 text-white rounded-lg font-semibold text-xs hover:bg-black">Salvează</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // OFFICIAL EXACT TIMETABLE DATA - FMI UNIBUC GRUPA 152
-        const INITIAL_TIMETABLE_TEMPLATE = {
-            "Luni": [
-                { type: "empty" },
-                { type: "empty" },
-                { 
-                    type: "class", 
-                    span: 2, 
-                    prof: "Sterian MC", 
-                    title: "Tools&TechnInCS<br>(Lab)", 
-                    room: "L-402", 
-                    bgClass: "bg-tools-lab" 
-                },
-                { 
-                    type: "class", 
-                    span: 2, 
-                    prof: "Stamate D", 
-                    title: "StrAlgebriceInInfo<br>(curs)", 
-                    room: "S-214", 
-                    bgClass: "bg-str-curs" 
-                },
-                { type: "empty" },
-                { type: "empty" },
-                { 
-                    type: "class", 
-                    span: 2, 
-                    prof: "Olaru V", 
-                    title: "Tools&TechnInCS<br>(curs) [sapt 2-8]", 
-                    room: "Amf.703", 
-                    bgClass: "bg-tools-curs",
-                    weeks: [2,3,4,5,6,7,8]
-                },
-                { type: "empty" },
-                { type: "empty" }
-            ],
-            "Marți": [
-                { type: "empty" },
-                { type: "empty" },
-                { 
-                    type: "class", 
-                    span: 2, 
-                    prof: "Petcu G", 
-                    title: "StrAlgebriceInInfo<br>(seminar)", 
-                    room: "S.209", 
-                    bgClass: "bg-str-sem" 
-                },
-                { type: "empty" },
-                { type: "empty" },
-                { 
-                    type: "class", 
-                    span: 3, 
-                    prof: "Sfetcu R", 
-                    title: "CalcDifer&Integr (curs)", 
-                    room: "S-214", 
-                    bgClass: "bg-calc-sfetcu" 
-                },
-                { type: "empty" },
-                { type: "empty" }
-            ],
-            "Miercuri": [
-                { type: "empty" },
-                { type: "empty" },
-                { 
-                    type: "class", 
-                    span: 2, 
-                    prof: "Ceausescu C / Dumitran M", 
-                    title: "AlgorithmProgr (curs)", 
-                    room: "S-214", 
-                    bgClass: "bg-web-curs" 
-                },
-                { 
-                    type: "class", 
-                    span: 2, 
-                    prof: "Chirita CE", 
-                    title: "WebTechniques (curs)", 
-                    room: "S-214", 
-                    bgClass: "bg-web-curs" 
-                },
-                { type: "empty" },
-                { type: "empty" },
-                { type: "empty" },
-                { type: "empty" },
-                { type: "empty" },
-                { type: "empty" }
-            ],
-            "Joi": [
-                { type: "empty" },
-                { type: "empty" },
-                { 
-                    type: "split", 
-                    span: 2,
-                    gr1: { prof: "Ceausescu C", title: "AlgorithmProgr (Lab)", room: "L.411", bgClass: "bg-web-curs", groupLabel: "Gr 1" },
-                    gr2: { prof: "Mocanu S", title: "WebTechniques (Lab)", room: "L-507", bgClass: "bg-str-curs", groupLabel: "Gr 2" }
-                },
-                { 
-                    type: "split", 
-                    span: 2,
-                    gr1: { prof: "Mocanu S", title: "WebTechniques (Lab)", room: "L-404", bgClass: "bg-str-curs", groupLabel: "Gr 1" },
-                    gr2: { prof: "Ceausescu C", title: "AlgorithmProgr (Lab)", room: "L.411", bgClass: "bg-web-curs", groupLabel: "Gr 2" }
-                },
-                { 
-                    type: "class", 
-                    span: 2, 
-                    prof: "Ceausescu C", 
-                    title: "AlgorithmProgr (seminar, SP)", 
-                    room: "S.109", 
-                    bgClass: "bg-web-curs",
-                    weeks: [2,4,6,8,10,12,14]
-                },
-                { 
-                    type: "class", 
-                    span: 2, 
-                    prof: "Sfetcu R", 
-                    title: "CalcDifer&Integr<br>(seminar)", 
-                    room: "S.211", 
-                    bgClass: "bg-calc-sfetcu" 
-                },
-                { type: "empty" },
-                { type: "empty" }
-            ],
-            "Vineri": [
-                { type: "empty" },
-                { type: "empty" },
-                { type: "empty" },
-                { type: "empty" },
-                { 
-                    type: "class", 
-                    span: 2, 
-                    prof: "Dogaru M", 
-                    title: "CompSystArchit<br>(sem+Lab)", 
-                    room: "L-401", 
-                    bgClass: "bg-tools-curs" 
-                },
-                { 
-                    type: "class", 
-                    span: 2, 
-                    prof: "Rusu C", 
-                    title: "CompSystArchit (curs)", 
-                    room: "S-415", 
-                    bgClass: "bg-web-curs" 
-                },
-                { type: "empty" },
-                { type: "empty" }
-            ]
-        };
-
-        let currentWeek = 1;
-        // Schedule data indexed by week: { 1: {...}, 2: {...}, ..., 14: {...} }
-        let weeklyTimetableData = {};
-        let trashData = [];
-        let selectedEmptySlot = null;
-        let db = null;
-        let unsubscribe = null;
-
-        const STORAGE_KEY = 'info_en_152_data_v5';
-
-        function buildInitialWeeklyData() {
-            const data = {};
-            for (let w = 1; w <= 14; w++) {
-                data[w] = JSON.parse(JSON.stringify(INITIAL_TIMETABLE_TEMPLATE));
-            }
-            return data;
-        }
-
-        window.onload = function() {
-            initWeekSelect();
-            loadTimetableData();
-            initFirebaseFromStorage();
-        };
-
-        function initWeekSelect() {
-            const select = document.getElementById('week-select');
-            select.innerHTML = '';
-            for(let i = 1; i <= 14; i++) {
-                const opt = document.createElement('option');
-                opt.value = i;
-                opt.textContent = i;
-                select.appendChild(opt);
-            }
-            select.value = currentWeek;
-            updateParity();
-        }
-
-        function changeWeek(val) {
-            currentWeek = parseInt(val, 10);
-            updateParity();
-            renderTable();
-        }
-
-        function updateParity() {
-            const isEven = currentWeek % 2 === 0;
-            const badge = document.getElementById('week-parity');
-            badge.textContent = isEven ? "Săptămână Pară" : "Săptămână Impară";
-            badge.className = isEven 
-                ? "font-bold px-2 py-0.5 rounded text-[11px] bg-purple-100 text-purple-800 border border-purple-300"
-                : "font-bold px-2 py-0.5 rounded text-[11px] bg-indigo-100 text-indigo-800 border border-indigo-300";
-        }
-
-        function loadTimetableData() {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                try {
-                    const parsed = JSON.parse(stored);
-                    weeklyTimetableData = parsed.schedule;
-                    trashData = parsed.trash || [];
-                } catch(e) {
-                    weeklyTimetableData = buildInitialWeeklyData();
-                    trashData = [];
-                }
-            } else {
-                weeklyTimetableData = buildInitialWeeklyData();
-                trashData = [];
-            }
-            updateTrashBadge();
-            renderTable();
-        }
-
-        function getCurrentSchedule() {
-            if (!weeklyTimetableData[currentWeek]) {
-                weeklyTimetableData[currentWeek] = JSON.parse(JSON.stringify(INITIAL_TIMETABLE_TEMPLATE));
-            }
-            return weeklyTimetableData[currentWeek];
-        }
-
-        function updateTrashBadge() {
-            const badge = document.getElementById('trash-badge-count');
-            const badgeMobile = document.getElementById('trash-badge-count-mobile');
-            if (badge) badge.textContent = trashData.length;
-            if (badgeMobile) badgeMobile.textContent = trashData.length;
-        }
-
-        function renderTable() {
-            const tbody = document.getElementById('timetable-body');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-
-            const dayLabels = [
-                { short: "Lu<br>Mon", name: "Luni" },
-                { short: "Ma<br>Tue", name: "Marți" },
-                { short: "Mi<br>Wed", name: "Miercuri" },
-                { short: "Jo<br>Thu", name: "Joi" },
-                { short: "Vi<br>Fri", name: "Vineri" }
-            ];
-
-            const schedule = getCurrentSchedule();
-
-            dayLabels.forEach(d => {
-                const tr = document.createElement('tr');
-                tr.className = "h-20 sm:h-24";
-
-                const tdDay = document.createElement('td');
-                tdDay.className = "font-bold text-center text-xs sm:text-sm p-1 sm:p-2 bg-white border-r border-black leading-tight select-none";
-                tdDay.innerHTML = d.short;
-                tr.appendChild(tdDay);
-
-                const items = schedule[d.name] || [];
-                
-                items.forEach((item, index) => {
-                    const isInactiveWeek = item.weeks && !item.weeks.includes(currentWeek);
-
-                    if (item.type === "empty") {
-                        const td = document.createElement('td');
-                        td.className = "bg-white hover:bg-slate-100 cursor-pointer border-r border-black text-center text-[10px] text-slate-400 font-medium";
-                        td.title = "Apasă pentru a adăuga / lipi o oră în această săptămână";
-                        td.innerHTML = `<span class="opacity-0 hover:opacity-100">+ Adaugă</span>`;
-                        td.onclick = () => handleEmptyCellClick(d.name, index);
-                        tr.appendChild(td);
-                    } else if (isInactiveWeek) {
-                        const tdEmpty = document.createElement('td');
-                        tdEmpty.colSpan = item.span || 1;
-                        tdEmpty.className = "bg-slate-50 hover:bg-slate-100 cursor-pointer border-r border-black text-center text-[10px] text-slate-400 font-medium italic p-1";
-                        tdEmpty.title = "Fără curs în această săptămână. Apasă pentru a edita / șterge ora";
-                        tdEmpty.innerHTML = `<span class="opacity-60 hover:opacity-100">${(item.title || 'Fără curs').replace(/<br>/g, ' ')} (Inactiv Săpt. ${currentWeek})</span>`;
-                        tdEmpty.onclick = () => openEditModal(d.name, index, null);
-                        tr.appendChild(tdEmpty);
-                    } else if (item.type === "class") {
-                        const td = document.createElement('td');
-                        td.colSpan = item.span || 2;
-                        td.className = `${item.bgClass} p-1.5 sm:p-2 text-center align-middle cursor-pointer hover:opacity-90 relative transition shadow-inner`;
-                        td.innerHTML = `
-                            <div class="flex flex-col h-full justify-between items-center text-black">
-                                <div class="text-[10px] sm:text-[11px] font-medium leading-none">${item.prof || ''}</div>
-                                <div class="font-bold text-[11px] sm:text-xs my-0.5 sm:my-1 leading-tight">${item.title || ''}</div>
-                                <div class="text-[10px] sm:text-[11px] font-medium leading-none text-right w-full pr-1">${item.room || ''}</div>
-                            </div>
-                        `;
-                        td.onclick = () => openEditModal(d.name, index, null);
-                        tr.appendChild(td);
-                    } else if (item.type === "split") {
-                        const td = document.createElement('td');
-                        td.colSpan = item.span || 2;
-                        td.className = "p-0 align-stretch border-r border-black";
-                        
-                        let htmlStr = `<div class="flex flex-col h-full border-0">`;
-
-                        if (item.gr1) {
-                            htmlStr += `
-                                <div onclick="openEditModal('${d.name}', ${index}, 'gr1')" class="${item.gr1.bgClass} p-1 text-center border-b border-black flex-1 flex flex-col justify-between cursor-pointer hover:brightness-95 transition">
-                                    <div class="flex justify-between text-[9px] font-medium leading-none">
-                                        <span>${item.gr1.prof}</span>
-                                        <span class="font-bold border border-black px-1 rounded bg-white/40">Gr 1</span>
-                                    </div>
-                                    <div class="font-bold text-[10px] my-0.5">${item.gr1.title}</div>
-                                    <div class="text-[9px] font-medium leading-none text-right">${item.gr1.room}</div>
-                                </div>
-                            `;
-                        } else {
-                            htmlStr += `
-                                <div onclick="openTrashOrEditForSubgroup('${d.name}', ${index}, 'gr1')" class="bg-white p-1 text-center border-b border-black flex-1 flex items-center justify-center cursor-pointer hover:bg-slate-100 text-[9px] text-slate-400 font-bold">
-                                    + Adaugă Gr 1
-                                </div>
-                            `;
-                        }
-
-                        if (item.gr2) {
-                            htmlStr += `
-                                <div onclick="openEditModal('${d.name}', ${index}, 'gr2')" class="${item.gr2.bgClass} p-1 text-center flex-1 flex flex-col justify-between cursor-pointer hover:brightness-95 transition">
-                                    <div class="flex justify-between text-[9px] font-medium leading-none">
-                                        <span>${item.gr2.prof}</span>
-                                        <span class="font-bold border border-black px-1 rounded bg-white/40">Gr 2</span>
-                                    </div>
-                                    <div class="font-bold text-[10px] my-0.5">${item.gr2.title}</div>
-                                    <div class="text-[9px] font-medium leading-none text-right">${item.gr2.room}</div>
-                                </div>
-                            `;
-                        } else {
-                            htmlStr += `
-                                <div onclick="openTrashOrEditForSubgroup('${d.name}', ${index}, 'gr2')" class="bg-white p-1 text-center flex-1 flex items-center justify-center cursor-pointer hover:bg-slate-100 text-[9px] text-slate-400 font-bold">
-                                    + Adaugă Gr 2
-                                </div>
-                            `;
-                        }
-
-                        htmlStr += `</div>`;
-                        td.innerHTML = htmlStr;
-                        tr.appendChild(td);
-                    }
-                });
-
-                tbody.appendChild(tr);
-            });
-        }
-
-        function openTrashViewerModal() {
-            const list = document.getElementById('trash-viewer-list');
-            list.innerHTML = '';
-
-            if (trashData.length === 0) {
-                list.innerHTML = '<div class="text-xs text-slate-400 italic text-center py-6">Coșul de gunoi este gol.</div>';
-            } else {
-                trashData.forEach((tItem, tIdx) => {
-                    const div = document.createElement('div');
-                    div.className = "flex items-center justify-between border rounded-lg p-2.5 bg-slate-50";
-                    div.innerHTML = `
-                        <div class="flex flex-col text-xs">
-                            <span class="font-bold text-slate-800">${(tItem.title || '').replace(/<br>/g, ' ')} ${tItem.groupLabel ? `(${tItem.groupLabel})` : ''}</span>
-                            <span class="text-[10px] text-slate-500">${tItem.prof || 'Fără prof'} | ${tItem.room || 'Fără sală'} • <span class="font-bold text-amber-700">Șters din Săpt. ${tItem.deletedFromWeek || '?'}</span></span>
-                        </div>
-                        <button onclick="deletePermanentlyFromTrash(${tIdx})" class="text-xs text-rose-600 hover:text-rose-800 font-bold px-2 py-1">
-                            <i class="fa-solid fa-xmark"></i> Șterge Definitiv
-                        </button>
-                    `;
-                    list.appendChild(div);
-                });
-            }
-
-            document.getElementById('trash-viewer-modal').classList.remove('hidden');
-        }
-
-        function handleEmptyCellClick(day, index) {
-            selectedEmptySlot = { day, index, subTarget: null };
-            if (trashData.length > 0) {
-                openTrashSelectModal();
-            } else {
-                openEditForEmptySlot();
-            }
-        }
-
-        function openTrashOrEditForSubgroup(day, index, subTarget) {
-            selectedEmptySlot = { day, index, subTarget };
-            if (trashData.length > 0) {
-                openTrashSelectModal();
-            } else {
-                openEditForEmptySlot();
-            }
-        }
-
-        function openTrashSelectModal() {
-            const list = document.getElementById('trash-select-list');
-            list.innerHTML = '';
-
-            trashData.forEach((tItem, tIdx) => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = "w-full text-left p-2.5 border rounded-lg hover:bg-indigo-50 border-slate-200 flex justify-between items-center transition";
-                btn.onclick = () => restoreItemToSlot(tIdx);
-                btn.innerHTML = `
-                    <div class="flex flex-col">
-                        <span class="font-bold text-xs text-slate-800">${(tItem.title || '').replace(/<br>/g, ' ')} ${tItem.groupLabel ? `(${tItem.groupLabel})` : ''}</span>
-                        <span class="text-[10px] text-slate-500">${tItem.prof || 'Fără prof'} | ${tItem.room || 'Fără sală'} (Șters din Săpt. ${tItem.deletedFromWeek || '?'})</span>
-                    </div>
-                    <span class="text-xs text-indigo-600 font-bold hover:underline">+ Plasează în Săpt. ${currentWeek}</span>
-                `;
-                list.appendChild(btn);
-            });
-
-            document.getElementById('trash-select-modal').classList.remove('hidden');
-        }
-
-        function closeTrashSelectModal() {
-            document.getElementById('trash-select-modal').classList.add('hidden');
-        }
-
-        function closeTrashViewerModal() {
-            document.getElementById('trash-viewer-modal').classList.add('hidden');
-        }
-
-        function deletePermanentlyFromTrash(tIndex) {
-            trashData.splice(tIndex, 1);
-            persistState();
-            updateTrashBadge();
-            openTrashViewerModal();
-        }
-
-        function emptyEntireTrash() {
-            if (window.confirm("Sigur dorești să ștergi definitiv toate elementele din coș?")) {
-                trashData = [];
-                persistState();
-                updateTrashBadge();
-                openTrashViewerModal();
-            }
-        }
-
-        function restoreItemToSlot(trashIndex) {
-            if (!selectedEmptySlot) return;
-            const itemToRestore = trashData.splice(trashIndex, 1)[0];
-            delete itemToRestore.deletedFromWeek;
-            
-            const { day, index, subTarget } = selectedEmptySlot;
-            const schedule = getCurrentSchedule();
-            const targetCell = schedule[day][index];
-
-            if (subTarget) {
-                if (targetCell.type !== "split") {
-                    schedule[day][index] = {
-                        type: "split",
-                        span: 2,
-                        gr1: subTarget === 'gr1' ? itemToRestore : null,
-                        gr2: subTarget === 'gr2' ? itemToRestore : null
-                    };
-                } else {
-                    targetCell[subTarget] = itemToRestore;
-                }
-            } else {
-                schedule[day][index] = itemToRestore;
-            }
-            
-            closeTrashSelectModal();
-            persistState();
-            updateTrashBadge();
-            renderTable();
-        }
-
-        function openEditForEmptySlot() {
-            if (!selectedEmptySlot) return;
-            closeTrashSelectModal();
-
-            const { day, index, subTarget } = selectedEmptySlot;
-            
-            document.getElementById('edit-day').value = day;
-            document.getElementById('edit-index').value = index;
-            document.getElementById('edit-subtarget').value = subTarget || '';
-
-            document.getElementById('edit-prof').value = '';
-            document.getElementById('edit-title').value = '';
-            document.getElementById('edit-room').value = '';
-            document.getElementById('edit-bgclass').value = 'bg-web-curs';
-
-            document.getElementById('edit-modal-title').textContent = `Adaugă Curs (${day} - Săpt. ${currentWeek})`;
-            const badge = document.getElementById('subgroup-badge');
-            if (subTarget) {
-                badge.classList.remove('hidden');
-                badge.textContent = subTarget === 'gr1' ? 'Subgrupă Gr 1' : 'Subgrupă Gr 2';
-            } else {
-                badge.classList.add('hidden');
-            }
-
-            document.getElementById('edit-modal').classList.remove('hidden');
-        }
-
-        function openEditModal(day, index, subTarget = null) {
-            const schedule = getCurrentSchedule();
-            const item = schedule[day][index];
-            if (!item) return;
-
-            document.getElementById('edit-day').value = day;
-            document.getElementById('edit-index').value = index;
-            document.getElementById('edit-subtarget').value = subTarget || '';
-
-            const badge = document.getElementById('subgroup-badge');
-
-            if (item.type === "split" && subTarget) {
-                const subItem = item[subTarget];
-                if (!subItem) return;
-
-                document.getElementById('edit-prof').value = subItem.prof || '';
-                document.getElementById('edit-title').value = (subItem.title || '').replace(/<br>/g, ' ');
-                document.getElementById('edit-room').value = subItem.room || '';
-                document.getElementById('edit-bgclass').value = subItem.bgClass || 'bg-web-curs';
-                
-                badge.classList.remove('hidden');
-                badge.textContent = `Subgrupă ${subTarget === 'gr1' ? 'Gr 1' : 'Gr 2'}`;
-            } else {
-                document.getElementById('edit-prof').value = item.prof || '';
-                document.getElementById('edit-title').value = (item.title || '').replace(/<br>/g, ' ');
-                document.getElementById('edit-room').value = item.room || '';
-                document.getElementById('edit-bgclass').value = item.bgClass || 'bg-web-curs';
-                
-                badge.classList.add('hidden');
-            }
-
-            document.getElementById('edit-modal-title').textContent = `Editează Ora (${day} - Săpt. ${currentWeek})`;
-            document.getElementById('edit-modal').classList.remove('hidden');
-        }
-
-        function closeEditModal() {
-            document.getElementById('edit-modal').classList.add('hidden');
-        }
-
-        function deleteCurrentCell() {
-            const day = document.getElementById('edit-day').value;
-            const index = parseInt(document.getElementById('edit-index').value, 10);
-            const subTarget = document.getElementById('edit-subtarget').value;
-            
-            const schedule = getCurrentSchedule();
-            const item = schedule[day][index];
-
-            if (item) {
-                if (item.type === "split" && subTarget) {
-                    const subItemToDelete = item[subTarget];
-                    if (subItemToDelete) {
-                        const { weeks, ...cleanItem } = subItemToDelete;
-                        trashData.push({ 
-                            ...cleanItem, 
-                            groupLabel: subTarget === 'gr1' ? 'Gr 1' : 'Gr 2',
-                            deletedFromWeek: currentWeek
-                        });
-                        item[subTarget] = null;
-
-                        if (!item.gr1 && !item.gr2) {
-                            schedule[day][index] = { type: "empty", span: 2 };
-                        }
-                    }
-                } else if (item.type !== "empty") {
-                    const { weeks, ...cleanItem } = item;
-                    trashData.push({ 
-                        ...cleanItem,
-                        deletedFromWeek: currentWeek
-                    });
-                    schedule[day][index] = { type: "empty", span: item.span || 1 };
-                }
-            }
-
-            persistState();
-            updateTrashBadge();
-            closeEditModal();
-            renderTable();
-        }
-
-        function saveCellEdit(e) {
-            e.preventDefault();
-            const day = document.getElementById('edit-day').value;
-            const index = parseInt(document.getElementById('edit-index').value, 10);
-            const subTarget = document.getElementById('edit-subtarget').value;
-            
-            const prof = document.getElementById('edit-prof').value.trim();
-            const title = document.getElementById('edit-title').value.trim();
-            const room = document.getElementById('edit-room').value.trim();
-            const bgClass = document.getElementById('edit-bgclass').value;
-
-            if (!title) return;
-
-            const newItemObj = {
-                prof,
-                title,
-                room,
-                bgClass,
-                ...(subTarget ? { groupLabel: subTarget === 'gr1' ? 'Gr 1' : 'Gr 2' } : {})
-            };
-
-            const schedule = getCurrentSchedule();
-            const cell = schedule[day][index];
-
-            if (subTarget) {
-                if (cell.type === "split") {
-                    cell[subTarget] = newItemObj;
-                } else {
-                    schedule[day][index] = {
-                        type: "split",
-                        span: 2,
-                        gr1: subTarget === 'gr1' ? newItemObj : null,
-                        gr2: subTarget === 'gr2' ? newItemObj : null
-                    };
-                }
-            } else {
-                schedule[day][index] = {
-                    ...cell,
-                    type: "class",
-                    span: cell.span || 2,
-                    ...newItemObj
-                };
-            }
-
-            persistState();
-            closeEditModal();
-            renderTable();
-        }
-
-        function confirmReset() {
-            if (window.confirm("Sigur dorești să resetezi orarul pe toate cele 14 săptămâni la varianta oficială?")) {
-                weeklyTimetableData = buildInitialWeeklyData();
-                trashData = [];
-                persistState();
-                updateTrashBadge();
-                renderTable();
-            }
-        }
-
-        function persistState() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify({ schedule: weeklyTimetableData, trash: trashData }));
-            if (db) {
-                import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js').then(({ doc, setDoc }) => {
-                    const docRef = doc(db, "orarData", "stareCurenta");
-                    setDoc(docRef, { data: weeklyTimetableData, trash: trashData, updatedAt: new Date().toISOString() }).catch(console.error);
-                });
-            }
-        }
-
-        function toggleFirebaseModal() {
-            document.getElementById('firebase-modal').classList.toggle('hidden');
-        }
-
-        function saveFirebaseConfig() {
-            const val = document.getElementById('firebase-config-input').value.trim();
-            if (!val) return;
-            try {
-                const config = JSON.parse(val);
-                localStorage.setItem('fmi_firebase_config', JSON.stringify(config));
-                initFirebase(config);
-                toggleFirebaseModal();
-            } catch(e) {
-                alert("Configurație JSON invalidă!");
-            }
-        }
-
-        function disconnectFirebase() {
-            localStorage.removeItem('fmi_firebase_config');
-            if (unsubscribe) unsubscribe();
-            db = null;
-            document.getElementById('sync-status').className = "px-2.5 py-1.5 rounded-lg font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1.5 text-xs";
-            document.getElementById('sync-status').innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Local Storage`;
-            toggleFirebaseModal();
-        }
-
-        function initFirebaseFromStorage() {
-            const stored = localStorage.getItem('fmi_firebase_config');
-            if (stored) {
-                try { initFirebase(JSON.parse(stored)); } catch(e){}
-            }
-        }
-
-        async function initFirebase(config) {
-            try {
-                const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
-                const { getFirestore, doc, onSnapshot, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-
-                const app = initializeApp(config);
-                db = getFirestore(app);
-
-                const docRef = doc(db, "orarData", "stareCurenta");
-
-                unsubscribe = onSnapshot(docRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        weeklyTimetableData = docSnap.data().data;
-                        trashData = docSnap.data().trash || [];
-                        updateTrashBadge();
-                        renderTable();
-                    } else {
-                        setDoc(docRef, { data: weeklyTimetableData, trash: trashData, updatedAt: new Date().toISOString() });
-                    }
-                });
-
-                document.getElementById('sync-status').className = "px-2.5 py-1.5 rounded-lg font-bold bg-indigo-100 text-indigo-800 border border-indigo-300 flex items-center gap-1.5 text-xs";
-                document.getElementById('sync-status').innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span> Firebase Cloud Sync`;
-            } catch(e) {
-                console.error("Firebase init failed:", e);
-            }
-        }
-    </script>
+    <aside class="trash" id="trash"></aside>
+  </div>
+</div>
+
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script type="module">
+/* ============================================================
+   CONFIGURARE FIREBASE
+   Firebase Console -> Project settings -> Your apps -> Web app
+   Copiază aici valorile (apiKey și appId). projectId e deja setat.
+   ============================================================ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCF30MnCtugdScjORWYgtSYzysrC2HHgsg",
+  projectId: "orar-fmi-2da04",
+  appId: "1:979438588163:web:4477656757f84279785936"
+};
+const FIREBASE_VERSION = "10.12.2";
+const DOC_PATH = ["orar", "main"];           // colecția "orar", documentul "main"
+const CONFIGURED = !FIREBASE_CONFIG.apiKey.startsWith("COMPLETEAZA");
+
+/* ============================================================
+   DATE ORAR
+   ============================================================ */
+const WEEKS = 14;
+const START = new Date(2026, 8, 28);          // săptămâna 1 începe luni, 28 septembrie 2026
+const H0 = 8, H1 = 19;                         // prima și ultima oră (19 = 19:00-19:50)
+const DAYS = ["Luni","Marți","Miercuri","Joi","Vineri"];
+const LANES = [1,1,1,2,1];                     // joi are 2 rânduri (semigrupele 1 și 2)
+const ROW0  = [0,1,2,3,5];                     // rândul (0-based) pe care începe fiecare zi
+const ROWMAP = [];
+LANES.forEach((n,d)=>{ for(let l=0;l<n;l++) ROWMAP.push({d,l}); });
+
+// full = ocupă toate rândurile zilei (pe joi: ambele semigrupe)
+const ITEMS = [
+  {id:"tools-lab", c:"tools", subject:"Tools&TechnInCS",  type:"Lab",          teacher:"Sterian MC", room:"L-402",  d:0, s:10, n:2, full:true},
+  {id:"alg-curs",  c:"alg",   subject:"StrAlgebriceInInfo",type:"curs",        teacher:"Stamate D",  room:"S-214",  d:0, s:12, n:2, full:true},
+  {id:"tools-curs",c:"tools", subject:"Tools&TechnInCS",  type:"curs",         teacher:"Olaru V",    room:"Amf.703",d:0, s:16, n:2, full:true, weeks:w=>w>=2&&w<=8, note:"inițial doar în săptămânile 2–8"},
+  {id:"alg-sem",   c:"alg",   subject:"StrAlgebriceInInfo",type:"seminar",     teacher:"Petcu G",    room:"S.209",  d:1, s:10, n:2, full:true},
+  {id:"calc-curs", c:"calc",  subject:"CalcDifer&Integr", type:"curs",         teacher:"Sfetcu R",   room:"S-214",  d:1, s:14, n:3, full:true},
+  {id:"ap-curs",   c:"ap",    subject:"AlgorithmProgr",   type:"curs",         teacher:"Ceausescu C / Dumitran M", room:"S-214", d:2, s:10, n:2, full:true},
+  {id:"web-curs",  c:"web",   subject:"WebTechniques",    type:"curs",         teacher:"Chirita CE", room:"S-214",  d:2, s:12, n:2, full:true},
+  {id:"ap-lab1",   c:"ap",    subject:"AlgorithmProgr",   type:"Lab · Gr 1",   teacher:"Ceausescu C",room:"L.411",  d:3, s:10, n:2, full:false, lane:0},
+  {id:"web-lab1",  c:"web",   subject:"WebTechniques",    type:"Lab · Gr 1",   teacher:"Mocanu S",   room:"L-507",  d:3, s:12, n:2, full:false, lane:0},
+  {id:"web-lab2",  c:"web",   subject:"WebTechniques",    type:"Lab · Gr 2",   teacher:"Mocanu S",   room:"L-404",  d:3, s:10, n:2, full:false, lane:1},
+  {id:"ap-lab2",   c:"ap",    subject:"AlgorithmProgr",   type:"Lab · Gr 2",   teacher:"Ceausescu C",room:"L.411",  d:3, s:12, n:2, full:false, lane:1},
+  {id:"ap-sem",    c:"ap",    subject:"AlgorithmProgr",   type:"seminar, SP",  teacher:"Ceausescu C",room:"S.109",  d:3, s:14, n:2, full:true, weeks:w=>w%2===0, note:"inițial doar în săptămânile pare"},
+  {id:"calc-sem",  c:"calc",  subject:"CalcDifer&Integr", type:"seminar",      teacher:"Sfetcu R",   room:"S.211",  d:3, s:16, n:2, full:true},
+  {id:"csa-sem",   c:"csa",   subject:"CompSystArchit",   type:"sem+Lab",      teacher:"Dogaru M",   room:"L-401",  d:4, s:12, n:2, full:true},
+  {id:"csa-curs",  c:"csa",   subject:"CompSystArchit",   type:"curs",         teacher:"Rusu C",     room:"S-415",  d:4, s:14, n:2, full:true},
+];
+const itemById = Object.fromEntries(ITEMS.map(i=>[i.id,i]));
+
+/* ============================================================
+   LOGICĂ
+   ============================================================ */
+const lanesFor = (item,d,lane) =>
+  item.full ? Array.from({length:LANES[d]},(_,i)=>i) : [LANES[d]>1 ? lane : 0];
+
+function canFit(weekInst, item, d, lane, h){
+  if (h + item.n > H1 + 1) return false;
+  const need = lanesFor(item,d,lane);
+  for (const inst of weekInst){
+    if (inst.d !== d) continue;
+    const it = itemById[inst.itemId]; if (!it) continue;
+    if (!lanesFor(it,d,inst.l).some(x=>need.includes(x))) continue;
+    if (inst.s < h + item.n && h < inst.s + it.n) return false;
+  }
+  return true;
+}
+
+function defaultWeek(w){
+  return ITEMS.filter(i=>!i.weeks || i.weeks(w))
+    .map(i=>({uid:`${i.id}@${w}`, itemId:i.id, d:i.d, s:i.s, l:i.lane||0}));
+}
+function defaultState(){
+  const weeks = {};
+  for (let w=1; w<=WEEKS; w++) weeks[w] = defaultWeek(w);
+  return {weeks, trash:[]};
+}
+function normalize(data){
+  data = data || {};
+  data.weeks = data.weeks || {};
+  for (let w=1; w<=WEEKS; w++) if (!Array.isArray(data.weeks[w])) data.weeks[w] = defaultWeek(w);
+  if (!Array.isArray(data.trash)) data.trash = [];
+  return data;
+}
+
+/* ============================================================
+   STOCARE: Firestore (cloud) sau localStorage (mod demo)
+   ============================================================ */
+function createLocalStore(){
+  const KEY = "orar-fmi-local";
+  const load = () => { try { return normalize(JSON.parse(localStorage.getItem(KEY))); } catch { return defaultState(); } };
+  return {
+    mode:"local",
+    subscribe(cb){ cb(load()); },
+    async mutate(fn){
+      const data = load(); const ok = fn(data) !== false;
+      if (ok) { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch {} }
+      return {ok, data};
+    }
+  };
+}
+
+async function createFirebaseStore(){
+  const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
+  const [{initializeApp}, {getFirestore, doc, onSnapshot, runTransaction}] = await Promise.all([
+    import(`${base}/firebase-app.js`),
+    import(`${base}/firebase-firestore.js`)
+  ]);
+  const db = getFirestore(initializeApp(FIREBASE_CONFIG));
+  const ref = doc(db, ...DOC_PATH);
+
+  const store = {
+    mode:"cloud",
+    subscribe(cb, onErr){
+      onSnapshot(ref, snap => {
+        if (snap.exists()) cb(normalize(snap.data()));
+        else store.mutate(()=>true).catch(onErr);   // creează documentul la prima rulare
+      }, onErr);
+    },
+    // Tranzacție: citește starea cea mai nouă, aplică modificarea, scrie înapoi.
+    // Astfel două persoane care modifică simultan nu își suprascriu munca.
+    async mutate(fn){
+      let ok = false, out = null;
+      await runTransaction(db, async tx => {
+        const s = await tx.get(ref);
+        const data = s.exists() ? normalize(s.data()) : defaultState();
+        ok = fn(data) !== false;
+        if (ok || !s.exists()) tx.set(ref, data);
+        out = data;
+      });
+      return {ok, data:out};
+    }
+  };
+  return store;
+}
+
+/* ============================================================
+   UI
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const dfmt = new Intl.DateTimeFormat("ro-RO", {day:"numeric", month:"short"});
+
+function rawWeek(){
+  const n = new Date();
+  const t = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  return Math.floor(Math.round((t - START)/86400000)/7) + 1;   // round: ține cont de schimbarea orei
+}
+const currentWeek = () => Math.min(WEEKS, Math.max(1, rawWeek()));
+function dayDate(w, d){ const x = new Date(START); x.setDate(x.getDate() + (w-1)*7 + d); return x; }
+
+let state = defaultState();
+let week = currentWeek();
+let store = null;
+
+function render(){ renderWeekUI(); renderGrid(); renderTrash(); }
+
+function renderWeekUI(){
+  $("weekSel").value = String(week);
+  $("prev").disabled = week <= 1;
+  $("next").disabled = week >= WEEKS;
+  const box = $("weekInfo"); box.replaceChildren();
+  box.append(`${dfmt.format(dayDate(week,0))} – ${dfmt.format(dayDate(week,4))}`);
+  box.append(el("span","pill muted", week%2===0 ? "săptămână pară" : "săptămână impară"));
+  if (rawWeek() === week) box.append(el("span","pill","săptămâna curentă"));
+  else {
+    const b = el("button","linkbtn","Mergi la săptămâna curentă");
+    b.onclick = () => { week = currentWeek(); render(); };
+    box.append(b);
+  }
+}
+
+function renderGrid(){
+  const g = $("grid"); g.replaceChildren();
+  const wk = state.weeks[week] || [];
+
+  g.append(Object.assign(el("div"), {style:"grid-area:1 / 1"}));
+  for (let h=H0; h<=H1; h++){
+    const c = el("div","hh"); c.style.gridArea = `1 / ${h-H0+2}`;
+    c.append(el("b",null,String(h)), el("small",null,`${h}:00 - ${h}:50`));
+    g.append(c);
+  }
+
+  const todayIdx = (new Date().getDay()+6)%7;
+  DAYS.forEach((name,d)=>{
+    const c = el("div","day"+(rawWeek()===week && todayIdx===d ? " today":""));
+    c.style.gridRow = `${ROW0[d]+2} / span ${LANES[d]}`; c.style.gridColumn = "1";
+    c.append(el("span",null,name), el("small",null,dfmt.format(dayDate(week,d))));
+    g.append(c);
+  });
+
+  // ocupare
+  const occ = ROWMAP.map(()=>Array(H1-H0+1).fill(false));
+  wk.forEach(inst=>{
+    const it = itemById[inst.itemId]; if (!it) return;
+    for (const l of lanesFor(it,inst.d,inst.l))
+      for (let h=inst.s; h<inst.s+it.n && h<=H1; h++) occ[ROW0[inst.d]+l][h-H0] = true;
+  });
+
+  // celule libere
+  ROWMAP.forEach(({d,l},r)=>{
+    for (let h=H0; h<=H1; h++){
+      if (occ[r][h-H0]) continue;
+      const b = el("button","cell"); b.type = "button";
+      b.style.gridRow = String(r+2); b.style.gridColumn = String(h-H0+2);
+      b.title = `${DAYS[d]} ${h}:00${LANES[d]>1?` · Gr ${l+1}`:""} – adaugă oră`;
+      b.append(el("span","plus","+"));
+      if (LANES[d]>1) b.append(el("span","gr",`Gr ${l+1}`));
+      b.onclick = () => openAdd(d,l,h);
+      g.append(b);
+    }
+  });
+
+  // ore
+  wk.forEach(inst=>{
+    const it = itemById[inst.itemId]; if (!it) return;
+    const full = it.full, lane = LANES[inst.d]>1 && !full ? inst.l : 0;
+    const b = el("button","item c-"+it.c); b.type = "button";
+    b.style.gridRow = `${ROW0[inst.d]+2+lane} / span ${full?LANES[inst.d]:1}`;
+    b.style.gridColumn = `${inst.s-H0+2} / span ${it.n}`;
+    b.append(el("div","te",it.teacher), el("div","su",it.subject), el("div","ty",it.type), el("div","ro",it.room));
+    b.onclick = () => openItem(inst);
+    g.append(b);
+  });
+}
+
+function renderTrash(){
+  const t = $("trash"); t.replaceChildren();
+  const h = el("h2",null,"Coș de gunoi ");
+  h.append(el("span","count",String(state.trash.length)));
+  t.append(h, el("p",null,"Comun tuturor săptămânilor. Ia o oră de aici apăsând pe o celulă liberă din orar."));
+  if (!state.trash.length){ t.append(el("div","empty","Coșul este gol.")); return; }
+  const list = el("div","chips");
+  state.trash.forEach(x=>{
+    const it = itemById[x.itemId]; if (!it) return;
+    const c = el("div","chip c-"+it.c);
+    c.append(el("b",null,`${it.subject} (${it.type})`), el("span",null,`${it.teacher} · ${it.n}h · scos din săpt. ${x.from}`));
+    list.append(c);
+  });
+  t.append(list);
+}
+
+/* ---------- dialoguri ---------- */
+const dlg = $("dlg");
+dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+function showDialog(...nodes){ $("dlgBody").replaceChildren(...nodes); if (!dlg.open) dlg.showModal(); }
+const hourRange = (s,n) => `${s}:00 – ${s+n-1}:50`;
+
+function openItem(inst){
+  const it = itemById[inst.itemId];
+  const dl = el("dl","rows");
+  const row = (k,v)=>{ dl.append(el("dt",null,k), el("dd",null,v)); };
+  row("Tip", it.type);
+  row("Profesor", it.teacher);
+  row("Sală", it.room);
+  row("Când", `${DAYS[inst.d]}, ${hourRange(inst.s,it.n)} (${it.n} ore)`);
+  row("Săptămâna", String(week));
+  if (it.note) row("Program inițial", it.note);
+
+  const rm = el("button","btn danger grow","Mută în coș");
+  rm.onclick = () => { dlg.close(); act(data=>{
+    const arr = data.weeks[week]||[]; const i = arr.findIndex(x=>x.uid===inst.uid);
+    if (i<0) return false;
+    const [x] = arr.splice(i,1); data.weeks[week] = arr;
+    data.trash.push({uid:x.uid, itemId:x.itemId, from:week});
+  }); };
+  const cl = el("button","btn","Închide"); cl.onclick = () => dlg.close();
+  const acts = el("div","actions"); acts.append(rm, cl);
+  const sub = el("div","sub",`Se elimină doar din săptămâna ${week}; celelalte săptămâni rămân neschimbate.`);
+  showDialog(el("h2",null,it.subject), dl, sub, acts);
+}
+
+function openAdd(d,lane,h){
+  const wk = state.weeks[week] || [];
+  const where = `${DAYS[d]}, ${h}:00${LANES[d]>1?` · Gr ${lane+1}`:""} · săpt. ${week}`;
+  const nodes = [el("h2",null,"Adaugă o oră"), el("div","sub",where)];
+  if (!state.trash.length){
+    nodes.push(el("div","empty","Coșul este gol. Mută mai întâi o oră în coș din orar."));
+  } else {
+    const list = el("div","picks");
+    state.trash.forEach(x=>{
+      const it = itemById[x.itemId]; if (!it) return;
+      const fits = canFit(wk,it,d,lane,h);
+      const b = el("button",`pick c-${it.c}`); b.type = "button"; b.disabled = !fits;
+      b.append(el("b",null,`${it.subject} (${it.type})`),
+               el("span",null, fits ? `${it.teacher} · ${it.n} ore (${hourRange(h,it.n)})` : `${it.teacher} · ${it.n} ore – nu încape aici`));
+      b.onclick = () => { dlg.close(); act(data=>{
+        const ti = data.trash.findIndex(y=>y.uid===x.uid); if (ti<0) return false;
+        const arr = data.weeks[week] || (data.weeks[week] = []);
+        if (!canFit(arr,it,d,lane,h)) return false;
+        data.trash.splice(ti,1);
+        arr.push({uid:x.uid, itemId:x.itemId, d, s:h, l:(LANES[d]>1 && !it.full) ? lane : 0});
+      }); };
+      list.append(b);
+    });
+    nodes.push(list);
+  }
+  const cl = el("button","btn","Anulează"); cl.onclick = () => dlg.close();
+  const acts = el("div","actions"); acts.append(cl);
+  nodes.push(acts);
+  showDialog(...nodes);
+}
+
+/* ---------- acțiuni + sincronizare ---------- */
+let toastTimer;
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ t.hidden = true; }, 4000);
+}
+async function act(fn){
+  try {
+    const r = await store.mutate(fn);
+    if (!r.ok) toast("Acțiunea nu a mai fost posibilă: orarul a fost modificat între timp.");
+    if (r.data) { state = r.data; render(); }
+  } catch (e) {
+    console.error(e);
+    toast("Nu s-a putut salva. Verifică conexiunea și regulile Firestore.");
+  }
+}
+function banner(msg){ const b = $("banner"); b.textContent = msg; b.hidden = !msg; }
+
+function buildWeekSelect(){
+  const s = $("weekSel");
+  for (let w=1; w<=WEEKS; w++){
+    const o = el("option",null,`Săptămâna ${w}`); o.value = String(w); s.append(o);
+  }
+  s.onchange = () => { week = +s.value; render(); };
+  $("prev").onclick = () => { if (week>1){ week--; render(); } };
+  $("next").onclick = () => { if (week<WEEKS){ week++; render(); } };
+}
+
+async function init(){
+  buildWeekSelect();
+  render();
+  if (CONFIGURED){
+    try { store = await createFirebaseStore(); }
+    catch (e){ console.error(e); banner("Nu m-am putut conecta la Firebase. Se folosește un mod local: modificările nu sunt partajate."); }
+  } else {
+    banner("Firebase nu este configurat încă (completează FIREBASE_CONFIG în index.html). Până atunci, modificările se salvează doar local, pe acest dispozitiv.");
+  }
+  if (!store) store = createLocalStore();
+  store.subscribe(data => { state = data; render(); },
+                  err => { console.error(err); banner("Eroare de sincronizare cu Firebase. Verifică regulile Firestore și conexiunea."); });
+}
+init();
+</script>
 </body>
 </html>
