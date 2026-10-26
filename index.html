@@ -109,6 +109,26 @@
             position: relative;
         }
 
+        td.empty-cell {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        td.empty-cell:hover {
+            background-color: #e3f2fd;
+        }
+
+        td.empty-cell::after {
+            content: "➕ Add";
+            font-size: 10px;
+            color: #999;
+            display: none;
+        }
+
+        td.empty-cell:hover::after {
+            display: inline-block;
+        }
+
         th {
             background-color: #fff;
             height: auto;
@@ -168,7 +188,7 @@
         .color-cyan { background-color: #80ffff; }
         .color-pink { background-color: #ff99ff; }
 
-        /* Structura dublă pentru laboratoare (Split Gr1 / Gr2 cu culori specifice) */
+        /* Structura dublă pentru laboratoare (Split Gr1 / Gr2) */
         .split-cell {
             display: flex;
             flex-direction: column;
@@ -234,21 +254,6 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.15);
         }
 
-        .restore-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .restore-btn:hover {
-            background: #218838;
-        }
-
         .delete-btn {
             position: absolute;
             top: 2px;
@@ -267,6 +272,44 @@
         td:hover .delete-btn {
             display: block;
         }
+
+        /* Modal alegere elemente din coș */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-item {
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #000;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .modal-item:hover {
+            opacity: 0.85;
+        }
     </style>
 </head>
 <body>
@@ -279,7 +322,7 @@
         <div class="week-controls">
             <label for="weekSelect">Săptămâna curentă:</label>
             <select id="weekSelect" onchange="schimbaSaptamana(this.value)">
-                <!-- Populat din JS (1-14) -->
+                <!-- Populat din JS -->
             </select>
             <span id="weekTypeBadge" style="margin-left: 10px; font-weight: normal; font-style: italic;"></span>
         </div>
@@ -314,15 +357,24 @@
         </table>
     </div>
 
-    <!-- Coșul de Gunoi -->
+    <!-- Coș de Gunoi -->
     <div class="trash-section">
         <div class="trash-header">
             <h3>🗑️ Coș de Gunoi / Ore Arhivate</h3>
-            <span style="font-size: 12px; color: #666;">(Apasă butonul verde pentru a trimite ora înapoi în orar)</span>
+            <span style="font-size: 12px; color: #666;">(Apasă pe o celulă goală din tabel pentru a alege ce oră pui în ea)</span>
         </div>
         <div class="trash-grid" id="trashGrid">
-            <!-- Orele șterse apar aici -->
+            <!-- Orele șterse -->
         </div>
+    </div>
+</div>
+
+<!-- Modal pentru adăugare din coș -->
+<div class="modal-overlay" id="trashModal">
+    <div class="modal-content">
+        <h3>Alege ora din coș pe care vrei să o adaugi:</h3>
+        <div id="modalItemsList"></div>
+        <button onclick="closeModal()" style="margin-top: 15px; width: 100%;">Închide</button>
     </div>
 </div>
 
@@ -330,7 +382,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Structură fixă conform imaginii
     const initialSchedule = {
         Mon: [
             { type: 'empty' }, { type: 'empty' },
@@ -344,20 +395,17 @@
             { type: 'empty' }, { type: 'empty' },
             { id: 't1', prof: 'Petcu G', title: 'StrAlgebraiceInInfo (seminar)', room: 'S.209', color: 'color-green', span: 2 },
             { type: 'empty' }, { type: 'empty' },
-            // Sfetcu R. ocupă EXACT 3 ore (14:00 - 16:50)
             { id: 't2', prof: 'Sfetcu R', title: 'CalcDifer&Integr (curs)', room: 'S-214', color: 'color-cyan', span: 3 },
             { type: 'empty' }, { type: 'empty' }
         ],
         Wed: [
             { type: 'empty' }, { type: 'empty' },
             { id: 'w1', prof: 'Ceausescu C / Dumitran M', title: 'AlgorithmProgr (curs)', room: 'S-214', color: 'color-pink', span: 2 },
-            // CURSUL DE LA 12 APARE AICI:
             { id: 'w2', prof: 'Chirita CE', title: 'WebTechniques (curs)', room: 'S-214', color: 'color-pink', span: 2 },
             { type: 'empty' }, { type: 'empty' }, { type: 'empty' }, { type: 'empty' }, { type: 'empty' }, { type: 'empty' }
         ],
         Thu: [
             { type: 'empty' }, { type: 'empty' },
-            // Subgrupe colorate individual ca în orarul de referință
             { id: 'th1', type: 'split', span: 2,
               gr1: { prof: 'Ceausescu C', title: 'AlgorithmProgr (Lab)', room: 'L.411', color: 'color-pink' },
               gr2: { prof: 'Mocanu S', title: 'WebTechniques (Lab)', room: 'L-404', color: 'color-yellow' } 
@@ -366,7 +414,6 @@
               gr1: { prof: 'Mocanu S', title: 'WebTechniques (Lab)', room: 'L-507', color: 'color-yellow' },
               gr2: { prof: 'Ceausescu C', title: 'AlgorithmProgr (Lab)', room: 'L.411', color: 'color-pink' } 
             },
-            // Seminarul de AlgorithmProgr apare DOAR în săptămânile PARE (sapt 2-14)
             { id: 'th3', prof: 'Ceausescu C', title: 'AlgorithmProgr (seminar, SP)', room: 'S.109', color: 'color-pink', span: 2, evenOnly: true },
             { id: 'th4', prof: 'Sfetcu R', title: 'CalcDifer&Integr (seminar)', room: 'S.211', color: 'color-cyan', span: 2 }
         ],
@@ -384,7 +431,8 @@
         trash: []
     };
 
-    // Populare săptămâni 1-14
+    let selectedSlot = null;
+
     const select = document.getElementById('weekSelect');
     for (let i = 1; i <= 14; i++) {
         const opt = document.createElement('option');
@@ -417,33 +465,52 @@
         }
     };
 
-    window.restaureazaDinCos = function(trashIndex) {
-        const item = appState.trash[trashIndex];
-        const day = item.originalDay || 'Mon';
-        
-        let targetIndex = -1;
-        for (let i = 0; i < appState.schedule[day].length; i++) {
-            if (appState.schedule[day][i].type === 'empty') {
-                targetIndex = i;
-                break;
-            }
+    window.openCellModal = function(day, slotIndex) {
+        if (appState.trash.length === 0) {
+            alert("Coșul de gunoi este gol! Nu ai nicio oră de adăugat.");
+            return;
         }
+        selectedSlot = { day, slotIndex };
+        const modalList = document.getElementById('modalItemsList');
+        modalList.innerHTML = '';
 
-        if (targetIndex !== -1) {
-            const restoredItem = { ...item };
-            delete restoredItem.originalDay;
-            appState.schedule[day][targetIndex] = restoredItem;
-            appState.trash.splice(trashIndex, 1);
-            saveState();
-            renderSchedule();
-            renderTrash();
-        } else {
-            alert(`Nu mai există spațiu liber în ziua de ${day} pentru această oră!`);
-        }
+        appState.trash.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = `modal-item ${item.color || 'color-pink'}`;
+            let label = item.title || (item.gr1 ? `${item.gr1.title} / ${item.gr2.title}` : 'Oră laborator');
+            div.innerHTML = `➕ ${label}`;
+            div.onclick = () => puneDinCosInSlot(index);
+            modalList.appendChild(div);
+        });
+
+        document.getElementById('trashModal').style.display = 'flex';
     };
 
+    window.closeModal = function() {
+        document.getElementById('trashModal').style.display = 'none';
+        selectedSlot = null;
+    };
+
+    function puneDinCosInSlot(trashIndex) {
+        if (!selectedSlot) return;
+
+        const item = appState.trash[trashIndex];
+        const { day, slotIndex } = selectedSlot;
+
+        const restoredItem = { ...item };
+        delete restoredItem.originalDay;
+
+        appState.schedule[day][slotIndex] = restoredItem;
+        appState.trash.splice(trashIndex, 1);
+
+        closeModal();
+        saveState();
+        renderSchedule();
+        renderTrash();
+    }
+
     window.resetToInitialData = function() {
-        if (confirm("Sigur dorești să resetezi orarul la forma inițială?")) {
+        if (confirm("Sigur dorești să resetezi orarul la varianta inițială?")) {
             appState.schedule = JSON.parse(JSON.stringify(initialSchedule));
             appState.trash = [];
             saveState();
@@ -496,6 +563,8 @@
 
                 if (item.type === 'empty') {
                     const td = document.createElement('td');
+                    td.className = 'empty-cell';
+                    td.onclick = () => openCellModal(dayObj.key, i);
                     tr.appendChild(td);
                 } else if (item.evenOnly && !isEvenWeek) {
                     const td = document.createElement('td');
@@ -555,16 +624,11 @@
             return;
         }
 
-        appState.trash.forEach((item, index) => {
+        appState.trash.forEach((item) => {
             const div = document.createElement('div');
             div.className = `trash-item ${item.color || 'color-pink'}`;
-
             let label = item.title || (item.gr1 ? `${item.gr1.title} / ${item.gr2.title}` : 'Oră laborator');
-            div.innerHTML = `
-                <span>${label} (${item.originalDay || 'Zi'})</span>
-                <button class="restore-btn" onclick="restaureazaDinCos(${index})">➕ Adaugă înapoi în Orar</button>
-            `;
-
+            div.innerHTML = `<span>${label} (${item.originalDay || 'Zi'})</span>`;
             grid.appendChild(div);
         });
     }
